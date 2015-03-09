@@ -54,6 +54,22 @@ void my_schedule(void)
     if(next->state == 0)/* -1 unrunnable, 0 runnable, >0 stopped */
     {
     	/* switch to next process */
+        /*
+            %0 prev.sp
+            %1 prev.ip
+            %2 next.sp
+            %3 next.ip
+
+            1. pushl ebp 保存ebp
+            2. esp -> prev.sp 保存当前进程的esp到sp
+            3. next.sp -> esp 将esp的值改为下一个进程的sp（之前的esp）
+            4. 1 -> prev.ip 应该是将eip的值保存到ip
+            5. pushl next.ip 新进程的eip放入栈
+            6. ret 出栈，将next的ip赋给eip
+            7. ?
+            8. popl ebp  恢复ebp （注意这里已经切换了进程）
+
+        */
     	asm volatile(	
         	"pushl %%ebp\n\t" 	    /* save ebp */
         	"movl %%esp,%0\n\t" 	/* save esp */
@@ -75,6 +91,22 @@ void my_schedule(void)
         my_current_task = next;
         printk(KERN_NOTICE ">>>switch %d to %d<<<\n",prev->pid,next->pid);
     	/* switch to new process */
+        /*
+            %0 prev.sp
+            %1 prev.ip
+            %2 next.sp
+            %3 next.ip
+
+            1. pushl ebp 保存ebp
+            2. esp -> prev.sp esp保存到当前进程的sp中
+            3. next.sp -> esp 下一个进程的sp赋给esp
+            4. next.sp -> ebp 下一个进程的sp赋给ebp
+            5. 1 -> prev.ip eip保存到当前进程的ip
+            6. pushl next.ip next的ip压栈
+            7. ret 出栈，next的ip赋给eip
+
+            跟上面的区别是：本进程初次运行，需要设置ebp，而不是从栈中pop ebp
+        */
     	asm volatile(	
         	"pushl %%ebp\n\t" 	    /* save ebp */
         	"movl %%esp,%0\n\t" 	/* save esp */

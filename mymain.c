@@ -37,7 +37,7 @@ void __init my_start_kernel(void)
     // 此时链表中的进程只有一个，这是一个循环链表
     task[pid].next = &task[pid];
     /*fork more process */
-    // 依次启动NUM个进程
+    // 依次启动NUM-1个进程，总计NUM个进程
     for(i=1;i<MAX_TASK_NUM;i++)
     {
         // 初始化PCB控制块
@@ -51,6 +51,19 @@ void __init my_start_kernel(void)
     /* start process 0 by task[0] */
     pid = 0;
     my_current_task = &task[pid]; // 当前运行的进程为0
+    /*
+        1. thread.sp -> esp 初始化esp
+        2. pushl thread.sp 将sp的值入栈，也就是栈底
+        3. pushl thread.ip 将ip，也就是my_process代码段的地址入栈
+        4. ret: popl eip 这里执行ret，实质就是popl eip，这一步将上面保存的ip的值，赋给eip
+        5. popl ebp 将栈底的地址赋给ebp
+
+        说明几点：
+        1. 上面之所以使用ret，是因为eip的值不可以直接修改
+        2. 这段代码的目的是运行0号进程，主要是初始化三个定时器，esp、ebp、eip
+        3. esp直接初始化
+        4. 现将sp和ip的值入栈，后面通过两次出栈，将值赋给eip、ebp
+    */
 	asm volatile(
     	"movl %1,%%esp\n\t" 	/* set task[pid].thread.sp to esp */
     	"pushl %1\n\t" 	        /* push ebp */
