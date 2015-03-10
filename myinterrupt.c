@@ -63,7 +63,7 @@ void my_schedule(void)
             1. pushl ebp 保存ebp
             2. esp -> prev.sp 保存当前进程的esp到sp
             3. next.sp -> esp 将esp的值改为下一个进程的sp（之前的esp）
-            4. 1 -> prev.ip 应该是将eip的值保存到ip
+            4. $1f -> prev.ip 应该是将eip的值保存到ip
             5. pushl next.ip 新进程的eip放入栈
             6. ret 出栈，将next的ip赋给eip
             7. ?
